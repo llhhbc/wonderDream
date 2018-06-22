@@ -3,10 +3,12 @@ import { NgModule } from '@angular/core';
 
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
+import { DreammapComponent } from './dreammap/dreammap.component';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    DreammapComponent
   ],
   imports: [
     BrowserModule,
