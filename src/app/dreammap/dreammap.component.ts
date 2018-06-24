@@ -18,9 +18,9 @@ export class DreammapComponent implements OnInit {
 
   ngOnInit() {
 
-    var svg = d3.select("svg"),
-      width = +svg.attr("width"),
-      height = +svg.attr("height");
+    var svg = d3.select("svg");
+      // width = +svg.attr("width"),
+      // height = +svg.attr("height");
 
 
     var color = d3.scaleOrdinal(d3.schemeCategory10);
@@ -28,15 +28,14 @@ export class DreammapComponent implements OnInit {
     var simulation = d3.forceSimulation()
       .force("link", d3.forceLink().id(function(d) { return d.id; }))
       .force("charge", d3.forceManyBody())
-      .force("center", d3.forceCenter(width/2, height/2));
+      .force("collision", d3.forceCollide(15*3))
+      .force("center", d3.forceCenter(500, 500));
 
       d3.json("assets/miserables.json", function(error, graph) {
         if (error) {
           console.log('get err');
           throw error;
         }
-
-        console.log('run here');
 
         var link = svg.append("g")
             .attr(ngcont, "")
@@ -48,22 +47,34 @@ export class DreammapComponent implements OnInit {
             .attr("fill", color(0))
             .attr("stroke-width", function(d) { return Math.sqrt(d.value); });
 
-        var node = svg.append("g")
-            .attr("class", "nodes")
+        var nodeg = svg
             .attr(ngcont, "")
-          .selectAll("circle")
+          .selectAll("g")
           .data(graph.nodes)
-          .enter().append("circle")
+          .enter().append("g")
             .attr(ngcont, "")
-            .attr("r", 5)
+            .attr("transform", "translate(80,80)")
+
+        var cir = nodeg.append("circle")
+            .attr("class", "nodes")
+            .attr("r", 15)
+            .attr("cx", 0)
+            .attr("cy", 0)
             .attr("fill", function(d) { return color(d.group%10); })
             .call(d3.drag()
                 .on("start", dragstarted)
                 .on("drag", dragged)
                 .on("end", dragended));
 
-        node.append("title")
+        cir.append("title")
             .text(function(d) { return d.id; });
+        nodeg.append("text")
+            .attr("dx", -20)
+            .text(function(d) { return d.id; })
+              .call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended));
 
         simulation
             .nodes(graph.nodes)
@@ -73,27 +84,32 @@ export class DreammapComponent implements OnInit {
             .links(graph.links);
 
         function ticked() {
+
           link
               .attr("x1", function(d) { return d.source.x; })
               .attr("y1", function(d) { return d.source.y; })
               .attr("x2", function(d) { return d.target.x; })
               .attr("y2", function(d) { return d.target.y; });
 
-          node
-              .attr("cx", function(d) { return d.x; })
-              .attr("cy", function(d) { return d.y; });
+          nodeg.attr("transform", function(d) { return "translate(" + d.x + ", " + d.y + ")";})
+          // cir
+          //     .attr("cx", function(d) { return d.x; })
+          //     .attr("cy", function(d) { return d.y; });
         }
 
 
         function dragstarted(d) {
-          if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+          if (!d3.event.active && Math.abs(d.fx - d.x) > 10) simulation.alphaTarget(0.3).restart();
           d.fx = d.x;
           d.fy = d.y;
         }
 
         function dragged(d) {
-          d.fx = d3.event.x;
-          d.fy = d3.event.y;
+          if (Math.abs(d.fx - d3.event.x) > 10 ) {
+            d.fx = d3.event.x;
+            d.fy = d3.event.y;
+          }
+          
         }
 
         function dragended(d) {
